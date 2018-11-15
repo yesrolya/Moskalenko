@@ -82,10 +82,41 @@ namespace ConsoleApp1
             {
                 for (int j = 0; j < size; j++)
                 {
-                    if (pos[i, j] != end.pos[i, j])
+                    if (pos[i, j] != end.pos[i, j] && pos[i,j] != 0)
                     {
                         num++;
                     }
+                }
+            }
+            difference = num;
+            return num;
+        }
+
+        //compare matrix current and target
+        public int CompareA(Matrix end)
+        {
+            //find quantity of different numbers on the same position in 2 matrix
+            int num = 0;
+            for (int i = 0; i < size; i++)
+            {
+                for (int j = 0; j < size; j++)
+                {
+                    if (pos[i, j] == 0) continue;
+                    int ii = 0;
+                    int jj = 0;
+                    for (ii = 0; ii < size; ii++)
+                    {
+                        for (jj = 0; jj < size; jj++)
+                        {
+                            if (pos[i, j] == end.pos[ii, jj])
+                            {
+                                num += Math.Abs(ii - i) + Math.Abs(jj - j);
+                                ii = size;
+                                jj = size;
+                            }
+                        }
+                    } 
+                    
                 }
             }
             difference = num;
@@ -136,51 +167,99 @@ class Program
             List<Matrix> start = new List<Matrix>();
             Matrix end, first;
             int qstep = 0;
+            int maxsteps = 15;
             int size = 3;
             int difference = size*size;
+            bool errorEnter = false;
             
-            int[,] m = new int[size, size];
-
             //enter initial data
-            //start matrix
-            Console.WriteLine("Enter start matrix:");
-            for (int i = 0; i < size; i++)
+            try
             {
-                string[] num = Console.ReadLine().Split(' ');
-                for (int j = 0; j < size; j++)
+                Console.WriteLine("Enter size of matrix:");
+                size = int.Parse(Console.ReadLine());
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Size of matrix entered incorrect: " + e);
+                Console.WriteLine("Default value = " + size);
+            }
+
+            try
+            {
+                Console.WriteLine("Enter quantity of steps:");
+                maxsteps = int.Parse(Console.ReadLine());
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Quantity of steps entered incorrect: " + e);
+                Console.WriteLine("Default value = " + maxsteps);
+            }
+            int[,] m = new int[size, size];
+            //start matrix
+            errorEnter = true;
+            while (errorEnter)
+            {
+                try
                 {
-                    m[i, j] = int.Parse(num[j]);
+                    Console.WriteLine("Enter start matrix: " + size + " numbers in one line");
+                    for (int i = 0; i < size; i++)
+                    {
+                        string[] num = Console.ReadLine().Split(' ');
+                        for (int j = 0; j < size; j++)
+                        {
+                            m[i, j] = int.Parse(num[j]);
+                        }
+                    }
+                    errorEnter = false;
+                    Console.Write("\n");
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Start matrix entered incorrect: " + e);
+                    Console.WriteLine("Enter numbers in start matrix again.");
+                    errorEnter = true;
                 }
             }
             start.Add(new Matrix(size, m));
             first = new Matrix(size, start[0].pos);
-            
-            Console.Write("\n");
+
             //target matrix
-            Console.WriteLine("Enter target matrix:");
-            for (int i = 0; i < size; i++)
+            errorEnter = true;
+            while (errorEnter)
             {
-                string[] num = Console.ReadLine().Split(' ');
-                for (int j = 0; j < size; j++)
+                try
                 {
-                    m[i, j] = int.Parse(num[j]);
+                    Console.WriteLine("Enter target matrix: " + size + " numbers in one line");
+                    for (int i = 0; i < size; i++)
+                    {
+                        string[] num = Console.ReadLine().Split(' ');
+                        for (int j = 0; j < size; j++)
+                        {
+                            m[i, j] = int.Parse(num[j]);
+                        }
+                    }                    
+                    Console.Write("\n");
+                    errorEnter = false;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Target matrix entered incorrect: " + e);
+                    Console.WriteLine("Enter numbers in target matrix again.");
+                    errorEnter = true;
                 }
             }
             end = new Matrix(size, m);
-            Console.Write("\n");
-
-            difference = start[0].Compare(end);
-
+            difference = start[0].CompareA(end);
 
             //solve
-            while (difference != 0) {
-                int min_difference = size * size;
+            for (qstep = 0; qstep < maxsteps; qstep++) {
+                int min_difference = size * size * size * size * size;
                 //раскрыть все вершины
                 List<Matrix> temp = new List<Matrix>();
                 for (int g = 0; g < start.Count; g++) {
                     //Console.WriteLine("G =" + g + "/" + start.Count);
                     foreach (Matrix temp_m in start[g].FindWays()) {
-                        if (temp_m.Compare(end) < min_difference) {
+                        if (temp_m.CompareA(end) < min_difference) {
                             min_difference = temp_m.difference;
                         }
                         temp.Add(temp_m);
@@ -191,12 +270,12 @@ class Program
 
                 foreach (Matrix temp_m in temp) {
                     //print all matrix opened
-                    for (int i = 0; i < size; i++) {
-                        for (int j = 0; j < size; j++) {
-                            Console.Write(temp_m.pos[i, j] + " ");
-                        }
-                        Console.Write("\n");
-                    }
+                    //for (int i = 0; i < size; i++) {
+                    //    for (int j = 0; j < size; j++) {
+                    //        Console.Write(temp_m.pos[i, j] + " ");
+                    //    }
+                    //    Console.Write("\n");
+                    //}
                     Console.WriteLine("weight:  " + (qstep + temp_m.difference));
 
                     //refresh start
@@ -206,35 +285,38 @@ class Program
                 }
 
                 difference = min_difference;
-                Console.WriteLine("MIN:  " + (qstep + min_difference));
-                qstep++;
+                Console.WriteLine("STEP #" + qstep + " MIN:  " + (qstep + min_difference));
+                if (difference == 0)
+                {
+                    Console.WriteLine("EEEEEEE");
+                    break;
+                    
+                }
             }
 
-            
-            //solution
-            //тут надо раскрыть все последовательности для каждой матрицы из старта
-            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            for (int i = 0; i < size; i++)
+
+            //answer
+
+            if (maxsteps > qstep && difference == 0)
             {
-                for (int j = 0; j < size; j++)
+                Console.WriteLine("Solution found at step #" + qstep);
+                Console.WriteLine("Quantity of solutions #" + start.Count);
+
+                Console.WriteLine("Steps = " + (start[0].way.Count));
+                foreach (var st in start)
                 {
-                    Console.Write(first.pos[i,j] + " ");
+                    string str = "The way is: ";
+                    foreach (int step in st.way)
+                    {
+                        str += (step == 9 ? "<=" : step == 3 ? "=>" : step == 0 ? @"/\" : @"\/") + " ";
+                    }
+                    Console.WriteLine(str);
                 }
-                Console.Write("\n");
             }
-            Console.Write("\n");
-            Console.WriteLine("Steps =" + (start[0].way.Count));
-            foreach (var st in start)
+            else
             {
-                Console.WriteLine("Step #" + st.way.Count);
-                string str = "The way is: ";
-                foreach (int step in st.way)
-                {
-                    str += (step == 9? "<=": step == 3? "=>": step == 0? @"/\": @"\/") + " ";
-                }
-                Console.WriteLine(str);
+                Console.WriteLine("There is no solution in " + maxsteps + " steps");
             }
-            
             Console.ReadKey();
         }
     }
